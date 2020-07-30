@@ -25,29 +25,30 @@ public class TicketsService {
     @JmsListener(destination = "order:new", containerFactory = "msgFactory")
     public void handleTicketInLock(OrderDTO orderDTO) {
         LOG.info("dddddd" + orderDTO);
-        int lockCount = ticketRepository.lockTicket(orderDTO.getCustomerId(),orderDTO.getTicketNum());
-        if(lockCount == 1){
+        int lockCount = ticketRepository.lockTicket(orderDTO.getCustomerId(), orderDTO.getTicketNum());
+        if (lockCount == 1) {
             orderDTO.setStatu("Ticket Lock");
-            jmsTemplate.convertAndSend("order:locked"+orderDTO);
-        }else{
+            jmsTemplate.convertAndSend("order:locked" + orderDTO);
+        } else {
 
         }
     }
 
     @JmsListener(destination = "order:ticket_move", containerFactory = "msgFactory")
     public void handleTicketMove(OrderDTO orderDTO) {
-        int lockCount = ticketRepository.lockTicket(orderDTO.getCustomerId(),orderDTO.getTicketNum());
+        int lockCount = ticketRepository.lockTicket(orderDTO.getCustomerId(), orderDTO.getTicketNum());
 
-        if(lockCount == 1){
+        if (lockCount == 1) {
             orderDTO.setStatu("Ticket Lock");
-            jmsTemplate.convertAndSend("order:locked"+orderDTO);
-        }else{
+            jmsTemplate.convertAndSend("order:locked" + orderDTO);
+        } else {
 
         }
     }
+
     @Transactional(rollbackFor = Exception.class)
     public Ticket ticketLock(OrderDTO orderDTO) {
-        Ticket ticket = ticketRepository.findOneByTicketNumAndLockUser(orderDTO.getTicketNum(),orderDTO.getTicketNum());
+        Ticket ticket = ticketRepository.findOneByTicketNumAndLockUser(orderDTO.getTicketNum(), orderDTO.getTicketNum());
         ticket.setLockUser(orderDTO.getCustomerId());
         ticket = ticketRepository.save(ticket);
         try {
@@ -62,12 +63,26 @@ public class TicketsService {
     @Transactional(rollbackFor = Exception.class)
     public int ticketLock2(OrderDTO orderDTO) {
         int lockCount = ticketRepository.lockTicket(orderDTO.getTicketNum(), orderDTO.getTicketNum());
-        LOG.info("dd"+lockCount);
+        LOG.info("dd" + lockCount);
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
         return lockCount;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @JmsListener(destination = "order:unlock", containerFactory = "msgFactory")
+    public void handleTicketUnlock(OrderDTO orderDTO) {
+        int count = ticketRepository.ticketUnlock(orderDTO.getCustomerId(), orderDTO.getTicketNum());
+        if (count == 0) {
+            LOG.info("ddd" + orderDTO);
+        }
+        count = ticketRepository.unMoveTicket(orderDTO.getCustomerId(), orderDTO.getTicketNum());
+        if (count == 0) {
+            LOG.info("ddd" + orderDTO);
+        }
+        jmsTemplate.convertAndSend("order:fail"+orderDTO);
     }
 }

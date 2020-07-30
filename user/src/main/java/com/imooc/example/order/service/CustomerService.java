@@ -31,6 +31,8 @@ public class CustomerService {
         PayInfo payInfo = payInfoRepository.findOneByOrderId(orderDTO.getId());
         if(payInfo != null){
             LOG.info("ddd"+orderDTO);
+            orderDTO.setStatu("没有足够的钱");
+            jmsTemplate.convertAndSend("order:unlock"+orderDTO);
             return;
         }else{
             if(customer.getDeposit() < orderDTO.getAmount()){  //钱不够
