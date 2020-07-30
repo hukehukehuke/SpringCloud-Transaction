@@ -1,0 +1,17 @@
+server:
+  port: 8082
+spring:
+  application:
+    name: ticket
+  datasource:
+    url: jdbc:mysql:///
+    username: root
+    password: root
+    driver-class-name:  #com.mysql.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://imooc:111111@localhost:8761/eureka/
